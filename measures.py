@@ -26,21 +26,21 @@ def calculate(model, init_model, device, train_loader, margin):
         _,S01,_ = init_modules[0].weight.svd()
         # Eigenvalues of the initial weight matrix in the second layer
         _,S02,_ = init_modules[2].weight.svd()
-        # Frobenius norm of the weight metrix in the first layer
+        # Frobenius norm of the weight matrix in the first layer
         Fro1 = modules[0].weight.norm()
-        # Frobenius norm of the weight metrix in the second layer
+        # Frobenius norm of the weight matrix in the second layer
         Fro2 = modules[2].weight.norm()
-        # difference of final weights to the inital weights in the first layer
+        # difference of final weights to the initial weights in the first layer
         diff1 = modules[0].weight - init_modules[0].weight
-        # difference of final weights to the inital weights in the second layer                    │Dist_Fro:        2.85
+        # difference of final weights to the initial weights in the second layer
         diff2 = modules[2].weight - init_modules[2].weight
         # Euclidean distance of the weight matrix in the first layer to the initial weight matrix
         Dist1 = diff1.norm()
         # Euclidean distance of the weight matrix in the second layer to the initial weight matrix
         Dist2 = diff2.norm()
-        # L_{1,infty} norm of the weight metrix in the first layer
+        # L_{1,infty} norm of the weight matrix in the first layer
         L1max1 = modules[0].weight.norm(p=1, dim=1).max()
-        # L_{1,infty} norm of the weight metrix in the second layer
+        # L_{1,infty} norm of the weight matrix in the second layer
         L1max2 = modules[2].weight.norm(p=1, dim=1).max()
         # L_{2,1} distance of the weight matrix in the first layer to the initial weight matrix
         L1Dist1 = diff1.norm(p=2, dim=1 ).sum()
@@ -75,7 +75,7 @@ def calculate(model, init_model, device, train_loader, margin):
             data = data.to(device).view(target.size(0),-1)
             layer_out = torch.zeros(target.size(0), H).to(device)
 
-            # calculate the norm of the output of the first layer in the intial model
+            # calculate the norm of the output of the first layer in the initial model
             def fun(m, i, o): layer_out.copy_(o.data)
             h = init_modules[1].register_forward_hook(fun)
             output = init_model(data)
@@ -98,8 +98,8 @@ def calculate(model, init_model, device, train_loader, margin):
         measure['#parameter'] = num_param
 
         # Generalization bound based on the VC dimension by Harvey et al. 2017
-        R = 4 * math.e * ( H + 2 * C )
-        VC = 2 + num_param * math.log(2 * R * math.log(R ,2), 2) * (2 * (D + 1) * H + (H + 1) * C) / ((D + 1) * H + (H + 1) * C)
+        VC = (2 + num_param * math.log(8 * math.e * ( H + 2 * C ) * math.log( 4 * math.e * ( H + 2 * C ) ,2), 2)
+                * (2 * (D + 1) * H + (H + 1) * C) / ((D + 1) * H + (H + 1) * C))
         measure['VC bound'] = 8 * (C * VC * math.log(math.e * max(m / VC, 1))) + 8 * math.log(2 / delta)
 
         # Generalization bound by Bartlett and Mendelson 2002
@@ -111,17 +111,20 @@ def calculate(model, init_model, device, train_loader, margin):
         measure['Fro bound'] = (R + 3 * math.sqrt(math.log(m / delta))) ** 2
 
         # Generalization bound by Bartlett et al. 2017
-        R = 144 * math.log(m) * math.log(2 * num_param) * (math.sqrt(data_L2) + 1 / math.sqrt(m)) * (((S2[0] *
-            L1Dist1) ** (2 / 3) + (S1[0] * L1Dist2) ** (2 / 3) ) ** (3 / 2)) / margin
-        measure['Spec_L1 bound'] = (R + math.sqrt(4.5 * math.log(1 / delta) + math.log(2 * m / max(margin, 1e-16)) + 2 *
-            math.log(2 + math.sqrt(m * data_L2)) + 2 * math.log( (2 + 2 * Dist1) * (2 + 2 * Dist2) * (2 + 2 * S1[0]) * (2 + 2 * S2[0])))) ** 2
+        R = (144 * math.log(m) * math.log(2 * num_param) * (math.sqrt(data_L2) + 1 / math.sqrt(m))
+                * (((S2[0] * L1Dist1) ** (2 / 3) + (S1[0] * L1Dist2) ** (2 / 3) ) ** (3 / 2)) / margin)
+        measure['Spec_L1 bound'] = (R + math.sqrt(4.5 * math.log(1 / delta) + math.log(2 * m / max(margin, 1e-16))
+                                    + 2 * math.log(2 + math.sqrt(m * data_L2)) + 2 * math.log( (2 + 2 * Dist1)
+                                        * (2 + 2 * Dist2) * (2 + 2 * S1[0]) * (2 + 2 * S2[0])))) ** 2
 
         # Generalization bound by Neyshabur et al. 2018
-        R = 42 * 8 * S1[0] * math.sqrt(math.log(8 * H)) * math.sqrt(domain_L2) * math.sqrt(H * (S2[0] * Dist1) ** 2 + C * (S1[0] * Dist2) ** 2 ) / (math.sqrt(2) * margin)
+        R = (42 * 8 * S1[0] * math.sqrt(math.log(8 * H)) * math.sqrt(domain_L2)
+            * math.sqrt(H * (S2[0] * Dist1) ** 2 + C * (S1[0] * Dist2) ** 2 ) / (math.sqrt(2) * margin))
         measure['Spec_Fro bound'] = R ** 2 + 6 * math.log( 2 * m / delta )
 
         # Our generalization bound
-        R = 3 * math.sqrt(2) * (math.sqrt(2 * C) + 1) * (Fro2 + 1) * (math.sqrt(layer_norm.sum()) + (Dist1 *  math.sqrt(data_L2)) + 1 ) / margin
+        R = (3 * math.sqrt(2) * (math.sqrt(2 * C) + 1) * (Fro2 + 1)
+            * (math.sqrt(layer_norm.sum()) + (Dist1 *  math.sqrt(data_L2)) + 1 ) / margin)
         measure['Our bound'] = (R + 3 * math.sqrt((5 * H + math.log(max(1, margin * math.sqrt(m)) / delta)))) ** 2
 
     return measure
