@@ -47,12 +47,18 @@ def validate(args, model, device, val_loader, criterion):
             # compute the output
             output = model(data)
 
-            # computer the classification error, loss and margin
+            # compute the classification error and loss
             pred = output.max(1)[1]
             sum_correct += pred.eq(target).sum().item()
             sum_loss += len(data) * criterion(output, target).item()
-            margin = torch.cat((margin, output[:,target].diag() - output[:,pred].diag()), 0)
+
+            # compute the margin
+            output_m = output.clone()
+            for i in range(target.size(0)):
+                output_m[i, target[i]] = output_m[i,:].min()
+            margin = torch.cat((margin, output[:, target].diag() - output_m[:, output_m.max(1)[1]].diag()), 0)
         val_margin = np.percentile( margin.cpu().numpy(), 5 )
+        print(val_margin)
     return 1 - (sum_correct / len(val_loader.dataset)), sum_loss / len(val_loader.dataset), val_margin
 
 
@@ -143,7 +149,7 @@ def main():
 
         val_err, val_loss, val_margin = validate(args, model, device, val_loader, criterion)
 
-        print(f'Epoch: {epoch + 1}/{args.epochs}\t Training loss: {tr_loss:.3f}\t ',
+        print(f'Epoch: {epoch + 1}/{args.epochs}\t Training loss: {tr_loss:.3f}\t',
                 f'Training error: {tr_err:.3f}\t Validation error: {val_err:.3f}')
 
         # stop training if the cross-entropy loss is less than the stopping condition
