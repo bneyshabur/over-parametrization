@@ -58,7 +58,7 @@ def validate(args, model, device, val_loader, criterion):
                 output_m[i, target[i]] = output_m[i,:].min()
             margin = torch.cat((margin, output[:, target].diag() - output_m[:, output_m.max(1)[1]].diag()), 0)
         val_margin = np.percentile( margin.cpu().numpy(), 5 )
-        print(val_margin)
+
     return 1 - (sum_correct / len(val_loader.dataset)), sum_loss / len(val_loader.dataset), val_margin
 
 
@@ -72,8 +72,7 @@ def load_data(split, dataset_name, datadir, nchannels):
     else:
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
-    tr_transform = transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(),
-                                        transforms.ToTensor(), normalize])
+    tr_transform = transforms.Compose([transforms.Resize(32), transforms.ToTensor(), normalize])
     val_transform = transforms.Compose([transforms.Resize(32), transforms.ToTensor(), normalize])
 
     get_dataset = getattr(datasets, dataset_name)
