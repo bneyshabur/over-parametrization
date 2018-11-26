@@ -4,7 +4,7 @@ This repository contains the code to train neural nets and compute various measu
 
 **[Towards Understanding the Role of Over-Parametrization in Generalization of Neural Networks](https://arxiv.org/abs/1805.12076)**
 
-[Behnam Neyshabur](https://cs.nyu.edu/~behnam/), [Zhiyuan Li](https://sites.google.com/site/invariantorli/), [Srinadh Bhojanapalli](http://ttic.uchicago.edu/~srinadh/), [Yann LeCun](http://yann.lecun.com/), [Nathan Srebro](http://www.ttic.edu/srebro)
+[Behnam Neyshabur](https://www.neyshabur.net), [Zhiyuan Li](https://sites.google.com/site/invariantorli/), [Srinadh Bhojanapalli](http://ttic.uchicago.edu/~srinadh/), [Yann LeCun](http://yann.lecun.com/), [Nathan Srebro](http://www.ttic.edu/srebro)
 
 ## Usage
 1. Install *Python 3.6* and *PyTorch 0.4.1*.
